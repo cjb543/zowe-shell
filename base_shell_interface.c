@@ -1,3 +1,8 @@
+/**
+ * @file shell.c
+ * @brief A simple shell with built-in command dispatch.
+ */
+
 #include "zowe_interface.c"
 #include <stdio.h>
 #include <stdlib.h>
@@ -5,9 +10,9 @@
 #include <unistd.h>
 #include <string.h>
 
-#define SHELL_READLINE_BUFFER_SIZE 1024
-#define SHELL_TOKEN_BUFFER_SIZE 64
-#define SHELL_TOKEN_DELIMITER " \t\r\n\a"
+#define SHELL_READLINE_BUFFER_SIZE 1024  /**< Initial buffer size for line input. */
+#define SHELL_TOKEN_BUFFER_SIZE 64       /**< Initial buffer size for token array. */
+#define SHELL_TOKEN_DELIMITER " \t\r\n\a" /**< Delimiters used during tokenization. */
 
 void shell_loop();
 char* shell_read_line();
@@ -40,13 +45,13 @@ int (*builtin_func[]) (char **) = {
     &show_job_errors
 };
 
-/*
- *
+/**
+ * @brief Runs the main read-execute loop until a command returns 0.
  */
 void shell_loop(){
-    char *line;  // <---- Line to be read
-    char **args; // <---- Arguments to be executed
-    int status;  // <---- Determines when to terminate
+    char *line;
+    char **args;
+    int status;
 
     do {
         printf("> ");
@@ -58,8 +63,10 @@ void shell_loop(){
     } while (status);
 }
 
-/*
+/**
+ * @brief Reads a line of input from stdin into a heap-allocated buffer.
  *
+ * @return Null-terminated string. Caller is responsible for freeing.
  */
 char* shell_read_line(){
     int bufsize = SHELL_READLINE_BUFFER_SIZE;
@@ -72,11 +79,9 @@ char* shell_read_line(){
         exit(EXIT_FAILURE);
     }
 
-    while (1){ // <----- More verbose way to write?
-        // Read a character
+    while (1){
         c = getchar();
 
-        // If EOF, add null terminator and return
         if (c == EOF || c == '\n'){
             buffer[position] = '\0';
             return buffer;
@@ -86,7 +91,6 @@ char* shell_read_line(){
         }
         position++;
 
-        // If we have exceeded the buffer, reallocate.
         if (position >= bufsize){
             bufsize += SHELL_READLINE_BUFFER_SIZE;
             buffer = realloc(buffer,bufsize);
@@ -98,8 +102,11 @@ char* shell_read_line(){
     }
 }
 
-/*
+/**
+ * @brief Splits a line into a null-terminated array of tokens.
  *
+ * @param line Input string. Modified in place by strtok.
+ * @return Null-terminated array of token pointers. Caller is responsible for freeing.
  */
 char** shell_split_line(char* line){
     int bufsize = SHELL_TOKEN_BUFFER_SIZE;
@@ -132,13 +139,16 @@ char** shell_split_line(char* line){
     return tokens;
 }
 
-/*
+/**
+ * @brief Matches args[0] against built-ins and dispatches accordingly,
+ *        falling back to shell_launch.
  *
+ * @param args Null-terminated argument array.
+ * @return Status code; 0 exits the shell loop.
  */
 int shell_execute(char** args){
     int i;
     if (args[0] == NULL){
-        // An empty command was entered.
         return 1;
     }
 
@@ -150,8 +160,11 @@ int shell_execute(char** args){
     return shell_launch(args);
 }
 
-/*
+/**
+ * @brief Forks a child process and execs the given command.
  *
+ * @param args Null-terminated argument array; args[0] is the executable.
+ * @return 1 when the child process exits or is signaled.
  */
 int shell_launch(char **args){
     pid_t pid, wpid;
@@ -159,18 +172,15 @@ int shell_launch(char **args){
 
     pid = fork();
     if (pid == 0) {
-        // Child process
         if (execvp(args[0], args) == -1){
             perror("Child process error\n");
         }
         exit(EXIT_FAILURE);
     }
     else if (pid < 0) {
-        // Error forking
         perror("Forking error\n");
     }
     else {
-        // Parent process
         do {
             wpid = waitpid(pid, &status, WUNTRACED);
         } while (!WIFEXITED(status) && !WIFSIGNALED(status));
@@ -178,16 +188,20 @@ int shell_launch(char **args){
     return 1;
 }
 
-/*
+/**
+ * @brief Returns the number of registered built-in commands.
  *
+ * @return Length of builtin_str[].
  */
 int shell_num_builtins(){
     return sizeof(builtin_str) / sizeof(char*);
 }
 
-
-/*
+/**
+ * @brief Changes the current working directory.
  *
+ * @param args args[1] is the target directory.
+ * @return 1.
  */
 int shell_cd(char **args){
     if (args[1] == NULL){
@@ -201,8 +215,11 @@ int shell_cd(char **args){
     return 1;
 }
 
-/*
+/**
+ * @brief Prints a list of available built-in commands to stdout.
  *
+ * @param args Unused.
+ * @return 1.
  */
 int shell_help(char **args){
     int i;
@@ -215,8 +232,11 @@ int shell_help(char **args){
     return 1;
 }
 
-/*
+/**
+ * @brief Signals the shell loop to terminate.
  *
+ * @param args Unused.
+ * @return 0.
  */
 int shell_exit(char **args){
     return 0;

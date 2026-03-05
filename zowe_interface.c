@@ -1,19 +1,25 @@
+/**
+ * @file zowe_interface.c
+ * @brief Wrappers for invoking Zowe CLI commands and managing Zowe configuration.
+ */
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <sys/wait.h>
 #include <unistd.h>
 #include <string.h>
 
-/*
+/**
+ * @brief Writes credentials to the Zowe config file.
  *
+ * @todo Determine default config file locations per OS. If not found
+ *       automatically, prompt the user to supply a path.
+ *
+ * @param id     User or team identifier.
+ * @param psswd  Corresponding password.
+ * @return 1.
  */
-// TODO: Figure out default locations for Zowe. Design search with as little friction as possible.
 int update_zowe_config_file(char* id, char* psswd){
-    // Check user OS first. This determines where files COULD be located. If
-    // unable to automatically check for files, prompt user to search for 
-    // zowe.config.js, or to close/abort. Since we're in C with no GUI
-    // framework, probably just ask them to type in a path, check if the file
-    // is at that path, and execute accordingly.
     pid_t pid = fork();
     if (pid == 0){
         char* decoded_alias[] = {"zowe", "something", "something", NULL};
@@ -27,30 +33,19 @@ int update_zowe_config_file(char* id, char* psswd){
         perror("Set Base Profile failed to fork. Aborting...");
     }
     return 1;
-
-    // If the user is on any version of Windows (32 is backwards compatible with 64, so
-    // any OS works)
-    #ifndef _WIN32
-    #endif
-
-    // If the user is on Linux...
-    #ifndef __gnu_linux__
-    #endif
-
-    // If the user is on MacOS...
-
-    return 1;
 }
 
-/*
+/**
+ * @brief Prompts for credentials interactively, then calls update_zowe_config_file.
  *
+ * @param args Unused.
+ * @return 1.
  */
 int set_base_profile(char** args){
     char id[32], psswd[32];
     char ch;
     int i = 0;
 
-    // Prompt the user to enter their ID
     printf("Enter your team or personal ID:\n");
     while (1){
         ch = getchar();
@@ -59,7 +54,6 @@ int set_base_profile(char** args){
             break;
         i++;
     }
-    // Prompt the user to enter their password
     printf ("Enter your teams or personal password:\n");
     while (1){
         ch = getchar();
@@ -82,15 +76,16 @@ int set_base_profile(char** args){
         perror("Set Base Profile failed to fork. Aborting...");
     }
 
-    // Assign username and password to Zowe config file
     update_zowe_config_file(id, psswd);
 
     return 1;
 }
 
-
-/*
+/**
+ * @brief Submits the most recent job via Zowe CLI.
  *
+ * @param args Unused.
+ * @return 1.
  */
 int submit_latest_job(char** args){
     pid_t pid = fork();
@@ -108,8 +103,11 @@ int submit_latest_job(char** args){
     return 1;
 }
 
-/*
+/**
+ * @brief Fetches output for the most recent job via Zowe CLI.
  *
+ * @param args Unused.
+ * @return 1.
  */
 int fetch_latest_job(char** args){
     pid_t pid = fork();
@@ -127,8 +125,11 @@ int fetch_latest_job(char** args){
     return 1;
 }
 
-/*
+/**
+ * @brief Displays job details via Zowe CLI.
  *
+ * @param args Unused.
+ * @return 1.
  */
 int display_job(char** args){
     pid_t pid = fork();
@@ -146,8 +147,11 @@ int display_job(char** args){
     return 1;
 }
 
-/*
+/**
+ * @brief Retrieves job error output via Zowe CLI.
  *
+ * @param args Unused.
+ * @return 1.
  */
 int show_job_errors(char** args){
     pid_t pid = fork();
@@ -164,4 +168,3 @@ int show_job_errors(char** args){
     }
     return 1;
 }
-
