@@ -4,9 +4,11 @@
 #include <sys/wait.h>
 #include <unistd.h>
 #include <string.h>
+
 #define SHELL_READLINE_BUFFER_SIZE 1024
 #define SHELL_TOKEN_BUFFER_SIZE 64
 #define SHELL_TOKEN_DELIMITER " \t\r\n\a"
+
 void shell_loop();
 char* shell_read_line();
 char** shell_split_line(char*);
@@ -16,6 +18,7 @@ int shell_help(char **args);
 int shell_exit(char **args);
 int shell_num_builtins();
 int shell_launch(char** args);
+
 char *builtin_str[] = {
     "cd",
     "help",
@@ -37,6 +40,9 @@ int (*builtin_func[]) (char **) = {
     &show_job_errors
 };
 
+/*
+ *
+ */
 void shell_loop(){
     char *line;  // <---- Line to be read
     char **args; // <---- Arguments to be executed
@@ -52,6 +58,9 @@ void shell_loop(){
     } while (status);
 }
 
+/*
+ *
+ */
 char* shell_read_line(){
     int bufsize = SHELL_READLINE_BUFFER_SIZE;
     int position = 0;
@@ -89,6 +98,9 @@ char* shell_read_line(){
     }
 }
 
+/*
+ *
+ */
 char** shell_split_line(char* line){
     int bufsize = SHELL_TOKEN_BUFFER_SIZE;
     int position = 0;
@@ -120,6 +132,9 @@ char** shell_split_line(char* line){
     return tokens;
 }
 
+/*
+ *
+ */
 int shell_execute(char** args){
     int i;
     if (args[0] == NULL){
@@ -135,6 +150,9 @@ int shell_execute(char** args){
     return shell_launch(args);
 }
 
+/*
+ *
+ */
 int shell_launch(char **args){
     pid_t pid, wpid;
     int status;
@@ -160,10 +178,17 @@ int shell_launch(char **args){
     return 1;
 }
 
+/*
+ *
+ */
 int shell_num_builtins(){
     return sizeof(builtin_str) / sizeof(char*);
 }
 
+
+/*
+ *
+ */
 int shell_cd(char **args){
     if (args[1] == NULL){
         fprintf(stderr, "shell: expected argument to  \"cd\"\n");
@@ -176,6 +201,9 @@ int shell_cd(char **args){
     return 1;
 }
 
+/*
+ *
+ */
 int shell_help(char **args){
     int i;
     printf("Benson's Zowe Shell\n");
@@ -187,6 +215,9 @@ int shell_help(char **args){
     return 1;
 }
 
+/*
+ *
+ */
 int shell_exit(char **args){
     return 0;
 }
